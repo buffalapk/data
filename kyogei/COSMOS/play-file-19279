@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>三部合唱プレーヤー</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f0f0f0;
+    }
+    .container {
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    label {
+      margin: 0 15px;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>三部合唱プレーヤー</h2>
+
+    <audio id="player" controls>
+      <source id="audioSource" src="ALL.mp3" type="audio/mp3">
+      お使いのブラウザは audio タグをサポートしていません。
+    </audio>
+
+    <div class="controls">
+      <label>
+        <input type="checkbox" id="soprano" checked>
+        ソプラノ
+      </label>
+      <label>
+        <input type="checkbox" id="alto" checked>
+        アルト
+      </label>
+      <label>
+        <input type="checkbox" id="tenor" checked>
+        テノール
+      </label>
+    </div>
+  </div>
+
+  <script>
+    const player = document.getElementById("player");
+    const audioSource = document.getElementById("audioSource");
+    const soprano = document.getElementById("soprano");
+    const alto = document.getElementById("alto");
+    const tenor = document.getElementById("tenor");
+
+    function getAudioFile() {
+      const s = soprano.checked;
+      const a = alto.checked;
+      const t = tenor.checked;
+
+      if (s && a && t) return "ALL.mp3";
+      if (!s && a && t) return "アルト、テノール.mp3";
+      if (!s && a && !t) return "アルト.mp3";
+      if (!s && !a && !t) return "カラピアノ.mp3";
+      if (s && a && !t) return "ソプラノ、アルト.mp3";
+      if (s && !a && t) return "ソプラノ、テノール.mp3";
+      if (s && !a && !t) return "ソプラノ.mp3";
+      if (!s && !a && t) return "テノール.mp3";
+      return "カラピアノ.mp3";
+    }
+
+    function updateAudio() {
+      const currentTime = player.currentTime;
+      const newSrc = getAudioFile();
+
+      if (audioSource.src.endsWith(newSrc)) return;
+
+      player.pause();
+      audioSource.src = newSrc;
+      player.load();
+      player.currentTime = currentTime;
+      player.play();
+    }
+
+    [soprano, alto, tenor].forEach(cb => cb.addEventListener("change", updateAudio));
+
+    window.addEventListener("load", () => {
+      player.load(); // 初期状態は ALL.mpe
+    });
+  </script>
+
+</body>
+</html>
