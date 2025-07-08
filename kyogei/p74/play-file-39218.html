@@ -16,28 +16,32 @@
     .container {
       text-align: center;
       background: white;
-      padding: 30px;
-      margin-top: 40px;
+      padding: 20px;
+      margin-top: 20px;
       border-radius: 15px;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 80%;
       max-width: 600px;
-      width: 100%;
     }
-    .controls, .lyrics {
-      margin-top: 20px;
+    .controls {
+      margin: 20px 0;
     }
     label {
       margin: 0 15px;
       font-size: 1.1em;
     }
-    .lyrics span {
-      display: block;
-      margin: 5px 0;
+    #lyrics {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      text-align: left;
+    }
+    .line {
+      padding: 5px;
       cursor: pointer;
     }
-    .lyrics .active {
-      color: red;
-      font-weight: bold;
+    .active {
+      background: yellow;
     }
   </style>
 </head>
@@ -57,11 +61,7 @@
       <label><input type="checkbox" id="tenor" checked> テノール</label>
     </div>
 
-    <div class="controls">
-      <input type="file" id="lrcFile" accept=".lrc">
-    </div>
-
-    <div class="lyrics" id="lyrics"></div>
+    <div id="lyrics"></div>
   </div>
 
   <script>
@@ -70,10 +70,7 @@
     const soprano = document.getElementById("soprano");
     const alto = document.getElementById("alto");
     const tenor = document.getElementById("tenor");
-    const lrcInput = document.getElementById("lrcFile");
     const lyricsDiv = document.getElementById("lyrics");
-
-    let lyrics = [];
 
     function getAudioFile() {
       const s = soprano.checked;
@@ -104,75 +101,51 @@
       player.play();
     }
 
-    function parseLRC(text) {
-      const lines = text.split('\n');
-      const result = [];
-
-      for (let line of lines) {
-        const match = line.match(/\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
-        if (match) {
-          const minutes = parseInt(match[1]);
-          const seconds = parseFloat(match[2]);
-          const time = minutes * 60 + seconds;
-          const lyric = match[3].trim();
-          if (lyric) {
-            result.push({ time, lyric });
-          }
-        }
-      }
-
-      return result.sort((a, b) => a.time - b.time);
-    }
-
-    function displayLyrics() {
-      lyricsDiv.innerHTML = '';
-      lyrics.forEach((item, index) => {
-        const span = document.createElement('span');
-        span.textContent = item.lyric;
-        span.dataset.time = item.time;
-        span.addEventListener('click', () => {
-          player.currentTime = item.time;
-          player.play();
-        });
-        lyricsDiv.appendChild(span);
-      });
-    }
-
-    lrcInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          lyrics = parseLRC(evt.target.result);
-          displayLyrics();
-        };
-        reader.readAsText(file, 'UTF-8');
-      }
-    });
-
-    player.addEventListener('timeupdate', () => {
-      const currentTime = player.currentTime;
-      let currentIndex = -1;
-
-      for (let i = 0; i < lyrics.length; i++) {
-        if (currentTime >= lyrics[i].time) {
-          currentIndex = i;
-        } else {
-          break;
-        }
-      }
-
-      const spans = lyricsDiv.querySelectorAll('span');
-      spans.forEach(span => span.classList.remove('active'));
-      if (currentIndex !== -1) {
-        spans[currentIndex].classList.add('active');
-      }
-    });
-
     [soprano, alto, tenor].forEach(cb => cb.addEventListener("change", updateAudio));
 
+    // 歌詞読み込み
+    let lyrics = [];
+
+    fetch("read.lrc")
+      .then(res => res.text())
+      .then(data => {
+        const lines = data.split("\n");
+        lyrics = lines.flatMap(line => {
+          const match = line.match(/\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
+          if (!match) return [];
+          const min = parseInt(match[1], 10);
+          const sec = parseFloat(match[2]);
+          const text = match[3].trim();
+          return [{ time: min * 60 + sec, text }];
+        });
+
+        lyrics.forEach((line, index) => {
+          const div = document.createElement("div");
+          div.textContent = line.text;
+          div.classList.add("line");
+          div.dataset.time = line.time;
+          div.addEventListener("click", () => {
+            player.currentTime = line.time;
+            player.play();
+          });
+          lyricsDiv.appendChild(div);
+        });
+      });
+
+    // 再生中の行をハイライト
+    player.addEventListener("timeupdate", () => {
+      const currentTime = player.currentTime;
+      let currentIndex = lyrics.findIndex((line, i) => 
+        currentTime >= line.time && (i === lyrics.length - 1 || currentTime < lyrics[i + 1].time)
+      );
+
+      document.querySelectorAll(".line").forEach((el, i) => {
+        el.classList.toggle("active", i === currentIndex);
+      });
+    });
+
     window.addEventListener("load", () => {
-      player.load(); // 初期状態
+      player.load();
     });
   </script>
 
