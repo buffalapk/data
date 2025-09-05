@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>忘れることなんかできない</title>
+  <title>忘れることなんかできない（バッファ対応）</title>
   <link rel="stylesheet" href="https://unpkg.com/mediaelement@4.2.16/build/mediaelementplayer.min.css">
   <style>
-    body { font-family: sans-serif; margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; background:#f0f0f0; padding-top:60px; }
+    body { font-family:sans-serif; margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; background:#f0f0f0; padding-top:60px; }
     audio { width:90vw; max-width:500px; min-width:200px; }
     h2 { font-size:2.2em; margin:0 0 10px 0; text-align:center; }
     .controls { width:90vw; max-width:500px; display:flex; flex-wrap:wrap; justify-content:center; margin-top:20px; }
@@ -35,12 +35,21 @@
 <script>
 let player;
 const audioEl = document.getElementById('player');
-const audioSource = document.getElementById('audioSource');
 const soprano = document.getElementById('soprano');
 const alto = document.getElementById('alto');
 const tenor = document.getElementById('tenor');
 const lyricsContainer = document.getElementById('lyrics');
 let lyricLines = [];
+
+// バッファ用に全音源を先読み
+const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
+const audioBuffers = {};
+audioFiles.forEach(file=>{
+  const audio = new Audio();
+  audio.src = file;
+  audio.preload = "auto";
+  audioBuffers[file] = audio;
+});
 
 // MediaElementPlayer 初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,13 +74,16 @@ function getAudioFile() {
   return "000.mp3";
 }
 
-// 音源更新
+// 音源更新（プリロード済みを使用）
 function updateAudio() {
   if(!player) return;
-  const currentTime = player.media.currentTime;
   const newSrc = getAudioFile();
-  if(audioEl.getAttribute('src') === newSrc) return; // 同じなら何もしない
+  const currentTime = player.media.currentTime;
 
+  // すでに同じ音源なら何もしない
+  if(audioEl.getAttribute('src') === newSrc) return;
+
+  // MediaElementPlayer にセット
   player.setSrc(newSrc);
   player.load();
   player.media.currentTime = currentTime;
@@ -80,7 +92,7 @@ function updateAudio() {
 
 [soprano, alto, tenor].forEach(cb => cb.addEventListener('change', updateAudio));
 
-// 歌詞読み込み（例：Base64 LRC）
+// 歌詞読み込み（Base64 LRCの例）
 async function loadLyrics() {
   try {
     const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
