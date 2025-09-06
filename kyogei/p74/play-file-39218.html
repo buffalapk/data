@@ -23,29 +23,29 @@
 <body class="bg-gray-100 text-slate-700 p-8 min-h-screen flex flex-col items-center font-sans box-border">
   <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center leading-tight mb-4">忘れられない歌</h2>
 
-  <div class="w-11/12 max-w-lg p-6 bg-white rounded-2xl shadow-xl box-border">
+  <div class="w-11/12 max-w-lg p-6 bg-white rounded-2xl shadow-xl box-border flex justify-center">
     <!-- Green Audio Player用のコンテナ -->
-    <div class="gap-player w-full">
+    <div class="gap-player w-full mx-auto">
       <audio id="player" preload="auto" class="w-full">
         <source id="audioSource" src="111.mp3" type="audio/mp3">
         お使いのブラウザは audio タグをサポートしていません。
       </audio>
     </div>
+  </div>
 
-    <div class="w-full flex flex-wrap justify-center gap-6 mt-6 mb-6">
-      <label class="text-lg flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" id="soprano" checked class="w-5 h-5 cursor-pointer rounded-full">
-        ソプラノ
-      </label>
-      <label class="text-lg flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" id="alto" checked class="w-5 h-5 cursor-pointer rounded-full">
-        アルト
-      </label>
-      <label class="text-lg flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" id="tenor" checked class="w-5 h-5 cursor-pointer rounded-full">
-        テノール
-      </label>
-    </div>
+  <div class="w-11/12 max-w-lg flex flex-wrap justify-center gap-6 mt-6 mb-6">
+    <label class="text-lg flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="soprano" checked class="w-5 h-5 cursor-pointer rounded-full">
+      ソプラノ
+    </label>
+    <label class="text-lg flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="alto" checked class="w-5 h-5 cursor-pointer rounded-full">
+      アルト
+    </label>
+    <label class="text-lg flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="tenor" checked class="w-5 h-5 cursor-pointer rounded-full">
+      テノール
+    </label>
   </div>
 
   <div class="lyrics w-11/12 max-w-2xl text-lg leading-relaxed word-break-word p-4 sm:p-2 text-center"></div>
@@ -162,14 +162,6 @@
           line.element.classList.add('bg-yellow-300', 'font-semibold', 'text-gray-800');
         }
       });
-
-      // 自動スクロール無効化
-      // if (activeLine && activeLine.element) {
-      //   activeLine.element.scrollIntoView({
-      //     behavior: 'smooth',
-      //     block: 'center'
-      //   });
-      // }
     }
 
     audioEl.addEventListener("timeupdate", updateHighlight);
