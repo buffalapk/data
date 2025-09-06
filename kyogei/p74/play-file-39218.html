@@ -7,35 +7,21 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/css/green-audio-player.min.css">
 <style>
-/* プレーヤーを幅いっぱいに広げる */
-.gap-player {
-  width: 100% !important;
-}
-.gap-player .controls {
-  width: 100% !important;
-}
-/* カード高さをプレーヤーに自動フィット */
-.audio-card {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
+.gap-player { width: 100% !important; }
+.gap-player .controls { width: 100% !important; }
+.audio-card { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
 </style>
 </head>
 <body class="bg-gray-100 text-slate-700 p-8 min-h-screen flex flex-col items-center font-sans box-border">
 <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center leading-tight mb-4">忘れられない歌</h2>
 
-<!-- プレーヤーカード -->
- <div class="gap-player w-full">
+  <div class="gap-player w-full">
     <audio id="player" preload="auto" class="w-full">
       <source id="audioSource" src="111.mp3" type="audio/mp3">
       お使いのブラウザは audio タグをサポートしていません。
     </audio>
- </div>
+  </div>
 
-<!-- ボイスパート切替 -->
 <div class="w-11/12 max-w-lg flex flex-wrap justify-center gap-6 mt-6 mb-6">
   <label class="text-lg flex items-center gap-2 cursor-pointer">
     <input type="checkbox" id="soprano" checked class="w-5 h-5 cursor-pointer rounded-full"> ソプラノ
@@ -48,10 +34,8 @@
   </label>
 </div>
 
-<!-- 歌詞 -->
 <div class="lyrics w-11/12 max-w-2xl text-lg leading-relaxed word-break-word p-4 sm:p-2 text-center"></div>
 
-<!-- Green Audio Player JS -->
 <script src="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/js/green-audio-player.min.js"></script>
 
 <script>
@@ -62,8 +46,7 @@ const tenor = document.getElementById('tenor');
 const lyricsContainer = document.querySelector('.lyrics');
 
 const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
-const audioBuffers = {};
-audioFiles.forEach(f => { const a = new Audio(); a.src=f; a.preload="auto"; audioBuffers[f]=a; });
+audioFiles.forEach(f => { const a = new Audio(); a.src=f; a.preload="auto"; });
 
 function getAudioFile(){
   const s = soprano.checked, a = alto.checked, t = tenor.checked;
@@ -92,8 +75,8 @@ function updateHighlight(){
   const t = audioEl.currentTime;
   let activeLine = null;
   for(let i=0;i<lyricLines.length;i++){
-    const thisTime=lyricLines[i].time;
-    const nextTime=lyricLines[i+1]?lyricLines[i+1].time:Infinity;
+    const thisTime = lyricLines[i].time;
+    const nextTime = lyricLines[i+1]?lyricLines[i+1].time:Infinity;
     if(t>=thisTime && t<nextTime){ activeLine=lyricLines[i]; break; }
   }
   lyricLines.forEach(l=>{
@@ -127,6 +110,7 @@ async function loadLyrics(){
 document.addEventListener('DOMContentLoaded',()=>{
   GreenAudioPlayer.init({selector:'.gap-player', stopOthersOnPlay:true});
   audioEl=document.querySelector('.gap-player audio');
+  // 再生ボタン・チェックボックス連動
   [soprano, alto, tenor].forEach(cb=>cb.addEventListener('change',updateAudio));
   audioEl.addEventListener('timeupdate',updateHighlight);
   loadLyrics();
@@ -134,4 +118,3 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 </body>
 </html>
-
