@@ -1,225 +1,337 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>忘れることなんかできない（バッファ対応）</title>
-  <link rel="stylesheet" href="https://unpkg.com/mediaelement@4.2.16/build/mediaelementplayer.min.css">
-  <style>
-    /*
-     * モバイル向けに最適化されたスタイル
-     * 全体のレイアウトを中央に配置し、フォントサイズを調整しています。
-     */
-    body { 
-      font-family:sans-serif; 
-      margin: 0; 
-      min-height: 100vh; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      background: #f0f0f0; 
-      padding: 20px 10px; /* 上下左右にパディングを追加 */
-      box-sizing: border-box; /* パディングを幅に含める */
-    }
-    
-    /* ヘッダーのフォントサイズをレスポンシブに */
-    h2 { 
-      font-size: 2.2em; 
-      margin: 0 0 10px 0; 
-      text-align: center; 
-      word-break: break-word; /* 長いタイトルに対応 */
-    }
-    
-    /* プレイヤーの幅を画面幅に合わせる */
-    audio { 
-      width: 100%; 
-      max-width: 500px; 
-      min-width: 200px; 
-      margin-bottom: 20px;
-    }
-    
-    /* コントロール部分のレイアウト */
-    .controls { 
-      width: 100%; 
-      max-width: 500px; 
-      display: flex; 
-      flex-wrap: wrap; 
-      justify-content: center; 
-      margin-top: 10px; 
-    }
-    
-    label { 
-      margin: 5px 10px; /* パディングを調整 */
-      font-size: 1.1em; 
-      display: flex;
-      align-items: center;
-    }
-    
-    input[type="checkbox"] {
-      margin-right: 5px;
-    }
-    
-    /* 歌詞部分のスタイル調整 */
-    .lyrics { 
-      margin-top: 30px; 
-      text-align: left; 
-      width: 100%; /* 幅を画面幅に合わせる */
-      max-width: 600px; 
-      font-size: 1.1em; 
-      word-break: break-word; 
-    }
-    
-    .lyrics div { 
-      cursor: pointer; 
-      padding: 4px 0; 
-    }
-    
-    .highlight { 
-      background-color: #ffd700; /* ハイライトの色を少し変更 */
-      border-radius: 4px; /* ハイライトに角丸を追加 */
-      transition: background-color 0.3s ease;
-    }
-    
-    /* 小画面向けのメディアクエリ */
-    @media(max-width: 600px) { 
-      h2 { 
-        font-size: 1.6em; 
-      } 
-      .lyrics, label { 
-        font-size: 1.0em; 
-      } 
-      .controls {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>忘れることなんかできない（バッファ対応）</title>
+    <!-- Material Webのインポート -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@material/web/all.js"></script>
+    <style>
+        /*
+         * モバイル向けに最適化されたスタイル
+         * 全体のレイアウトを中央に配置し、フォントサイズを調整しています。
+         */
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 20px 10px; /* 上下左右にパディングを追加 */
+            box-sizing: border-box; /* パディングを幅に含める */
+        }
+
+        /* ヘッダーのフォントサイズをレスポンシブに */
+        h2 {
+            font-size: 2.2em;
+            margin: 0 0 10px 0;
+            text-align: center;
+            word-break: break-word; /* 長いタイトルに対応 */
+        }
+
+        /* Material Webコンポーネントのスタイル調整 */
+        .player-container {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        md-filled-icon-button, md-icon-button {
+            width: 48px;
+            height: 48px;
+        }
+
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .seek-slider {
+            width: 100%;
+        }
+
+        .volume-slider {
+            width: 100%;
+            max-width: 150px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* コントロール部分のレイアウト */
+        .controls {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        label {
+            margin: 5px 10px; /* パディングを調整 */
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Material Webのチェックボックス用スタイル */
+        md-checkbox {
+            margin-right: 5px;
+        }
+
+        /* 歌詞部分のスタイル調整 */
+        .lyrics {
+            margin-top: 30px;
+            text-align: left;
+            width: 100%; /* 幅を画面幅に合わせる */
+            max-width: 600px;
+            font-size: 1.1em;
+            word-break: break-word;
+        }
+
+        .lyrics div {
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .highlight {
+            background-color: #ffd700; /* ハイライトの色を少し変更 */
+            border-radius: 4px; /* ハイライトに角丸を追加 */
+            transition: background-color 0.3s ease;
+        }
+
+        /* 小画面向けのメディアクエリ */
+        @media(max-width: 600px) {
+            h2 {
+                font-size: 1.6em;
+            }
+            .lyrics, label {
+                font-size: 1.0em;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
 <h2>忘れることなんかできない</h2>
-<audio id="player" controls>
-  <source id="audioSource" src="111.mp3" type="audio/mp3">
-  お使いのブラウザは audio タグをサポートしていません。
-</audio>
+<div class="player-container">
+    <md-filled-icon-button id="play-pause-button">
+        <md-icon>play_arrow</md-icon>
+    </md-filled-icon-button>
+
+    <md-slider id="seek-slider" class="seek-slider" min="0" max="100" value="0"></md-slider>
+
+    <div class="player-controls">
+        <div class="volume-control">
+            <md-icon-button id="volume-icon-button">
+                <md-icon>volume_up</md-icon>
+            </md-icon-button>
+            <md-slider id="volume-slider" class="volume-slider" min="0" max="100" value="100"></md-slider>
+        </div>
+    </div>
+</div>
 
 <div class="controls">
-  <label><input type="checkbox" id="soprano" checked> ソプラノ</label>
-  <label><input type="checkbox" id="alto" checked> アルト</label>
-  <label><input type="checkbox" id="tenor" checked> テノール</label>
+    <label>
+        <md-checkbox id="soprano" checked></md-checkbox>
+        ソプラノ
+    </label>
+    <label>
+        <md-checkbox id="alto" checked></md-checkbox>
+        アルト
+    </label>
+    <label>
+        <md-checkbox id="tenor" checked></md-checkbox>
+        テノール
+    </label>
 </div>
 
 <div class="lyrics" id="lyrics"></div>
 
-<script src="https://unpkg.com/mediaelement@4.2.16/build/mediaelement-and-player.min.js"></script>
+<audio id="player" style="display:none;"></audio>
+
 <script>
-let player;
-const audioEl = document.getElementById('player');
-const soprano = document.getElementById('soprano');
-const alto = document.getElementById('alto');
-const tenor = document.getElementById('tenor');
-const lyricsContainer = document.getElementById('lyrics');
-let lyricLines = [];
+    const audioEl = document.getElementById('player');
+    const playPauseButton = document.getElementById('play-pause-button');
+    const seekSlider = document.getElementById('seek-slider');
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeIconButton = document.getElementById('volume-icon-button');
+    const soprano = document.getElementById('soprano');
+    const alto = document.getElementById('alto');
+    const tenor = document.getElementById('tenor');
+    const lyricsContainer = document.getElementById('lyrics');
+    let lyricLines = [];
 
-// バッファ用に全音源を先読み
-const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
-const audioBuffers = {};
-audioFiles.forEach(file=>{
-  const audio = new Audio();
-  audio.src = file;
-  audio.preload = "auto";
-  audioBuffers[file] = audio;
-});
-
-// MediaElementPlayer 初期化
-document.addEventListener('DOMContentLoaded', () => {
-  player = new MediaElementPlayer(audioEl);
-  loadLyrics();
-});
-
-// チェックボックスに応じた音源を返す
-function getAudioFile() {
-  const s = soprano.checked;
-  const a = alto.checked;
-  const t = tenor.checked;
-
-  if(s && a && t) return "111.mp3";
-  if(!s && a && t) return "011.mp3";
-  if(!s && a && !t) return "010.mp3";
-  if(!s && !a && !t) return "000.mp3";
-  if(s && a && !t) return "110.mp3";
-  if(s && !a && t) return "101.mp3";
-  if(s && !a && !t) return "100.mp3";
-  if(!s && !a && t) return "001.mp3";
-  return "000.mp3";
-}
-
-// 音源更新（プリロード済みを使用）
-function updateAudio() {
-  if(!player) return;
-  const newSrc = getAudioFile();
-  const currentTime = player.media.currentTime;
-
-  // すでに同じ音源なら何もしない
-  if(audioEl.getAttribute('src') === newSrc) return;
-
-  // MediaElementPlayer にセット
-  player.setSrc(newSrc);
-  player.load();
-  player.media.currentTime = currentTime;
-  player.media.play();
-}
-
-[soprano, alto, tenor].forEach(cb => cb.addEventListener('change', updateAudio));
-
-// 歌詞読み込み（Base64 LRCの例）
-async function loadLyrics() {
-  try {
-    const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
-    const text = await res.text();
-    const lines = text.split("\n");
-    lyricLines = [];
-    lyricsContainer.innerHTML = "";
-
-    lines.forEach(line => {
-      const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
-      if(match){
-        const min = parseInt(match[1]);
-        const sec = parseFloat(match[2]);
-        const time = min*60 + sec;
-        const lyric = match[3].trim();
-
-        const div = document.createElement("div");
-        div.textContent = lyric;
-        div.dataset.time = time;
-        div.addEventListener("click", ()=>{player.media.currentTime=time; player.media.play();});
-
-        lyricsContainer.appendChild(div);
-        lyricLines.push({time, element:div});
-      }
+    // バッファ用に全音源を先読み
+    const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
+    const audioBuffers = {};
+    audioFiles.forEach(file=>{
+        const audio = new Audio();
+        audio.src = file;
+        audio.preload = "auto";
+        audioBuffers[file] = audio;
     });
-  } catch(e) {
-    lyricsContainer.innerHTML="<p>歌詞ファイルの読み込みに失敗しました。</p>";
-    console.error(e);
-  }
-}
 
-// ハイライト更新
-function updateHighlight(){
-  if(!player) return;
-  const currentTime = player.media.currentTime;
-  let activeLine = null;
-  for(let i=0;i<lyricLines.length;i++){
-    const thisTime = lyricLines[i].time;
-    const nextTime = lyricLines[i+1]?lyricLines[i+1].time:Infinity;
-    if(currentTime>=thisTime && currentTime<nextTime){
-      activeLine = lyricLines[i];
-      break;
+    // 歌詞の読み込み
+    document.addEventListener('DOMContentLoaded', () => {
+        loadLyrics();
+    });
+
+    // チェックボックスに応じた音源を返す
+    function getAudioFile() {
+        // Material Webのチェックボックスの状態は `checked` プロパティで取得
+        const s = soprano.checked;
+        const a = alto.checked;
+        const t = tenor.checked;
+
+        if(s && a && t) return "111.mp3";
+        if(!s && a && t) return "011.mp3";
+        if(!s && a && !t) return "010.mp3";
+        if(!s && !a && !t) return "000.mp3";
+        if(s && a && !t) return "110.mp3";
+        if(s && !a && t) return "101.mp3";
+        if(s && !a && !t) return "100.mp3";
+        if(!s && !a && t) return "001.mp3";
+        return "000.mp3";
     }
-  }
-  lyricLines.forEach(line=>line.element.classList.toggle("highlight", line===activeLine));
-}
 
-audioEl.addEventListener("timeupdate", updateHighlight);
+    // 音源更新（プリロード済みを使用）
+    function updateAudio() {
+        const newSrc = getAudioFile();
+        const currentTime = audioEl.currentTime;
+
+        // すでに同じ音源なら何もしない
+        if(audioEl.src.endsWith(newSrc)) return;
+
+        // ブラウザのオーディオエレメントに直接セット
+        audioEl.src = newSrc;
+        audioEl.load();
+        audioEl.currentTime = currentTime;
+        
+        // 再生中だった場合は再生を再開
+        if (!audioEl.paused) {
+            audioEl.play();
+        }
+    }
+
+    // チェックボックスの状態変更を監視
+    [soprano, alto, tenor].forEach(cb => cb.addEventListener('change', updateAudio));
+
+    // 再生・一時停止ボタンのトグル機能
+    playPauseButton.addEventListener('click', () => {
+        if (audioEl.paused) {
+            audioEl.play();
+            playPauseButton.innerHTML = `<md-icon>pause</md-icon>`;
+        } else {
+            audioEl.pause();
+            playPauseButton.innerHTML = `<md-icon>play_arrow</md-icon>`;
+        }
+    });
+
+    // 歌詞読み込み（Base64 LRCの例）
+    async function loadLyrics() {
+        try {
+            const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
+            const text = await res.text();
+            const lines = text.split("\n");
+            lyricLines = [];
+            lyricsContainer.innerHTML = "";
+
+            lines.forEach(line => {
+                const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+                if (match) {
+                    const min = parseInt(match[1]);
+                    const sec = parseFloat(match[2]);
+                    const time = min * 60 + sec;
+                    const lyric = match[3].trim();
+
+                    const div = document.createElement("div");
+                    div.textContent = lyric;
+                    div.dataset.time = time;
+                    div.addEventListener("click", () => { audioEl.currentTime = time; audioEl.play(); });
+
+                    lyricsContainer.appendChild(div);
+                    lyricLines.push({ time, element: div });
+                }
+            });
+        } catch (e) {
+            lyricsContainer.innerHTML = "<p>歌詞ファイルの読み込みに失敗しました。</p>";
+            console.error(e);
+        }
+    }
+
+    // 時間の更新
+    audioEl.addEventListener('timeupdate', () => {
+        const currentTime = audioEl.currentTime;
+        const duration = audioEl.duration;
+        if (duration > 0) {
+            const progress = (currentTime / duration) * 100;
+            seekSlider.value = progress;
+        }
+        updateHighlight();
+    });
+
+    // 再生終了時の処理
+    audioEl.addEventListener('ended', () => {
+        playPauseButton.innerHTML = `<md-icon>play_arrow</md-icon>`;
+        seekSlider.value = 0;
+    });
+
+    // シークバー操作
+    seekSlider.addEventListener('input', () => {
+        const duration = audioEl.duration;
+        const newTime = (seekSlider.value / 100) * duration;
+        audioEl.currentTime = newTime;
+    });
+
+    // 音量スライダー操作
+    volumeSlider.addEventListener('input', () => {
+        audioEl.volume = volumeSlider.value / 100;
+        updateVolumeIcon(audioEl.volume);
+    });
+
+    // 音量アイコンの更新
+    function updateVolumeIcon(volume) {
+        let icon = 'volume_off';
+        if (volume > 0.66) {
+            icon = 'volume_up';
+        } else if (volume > 0) {
+            icon = 'volume_down';
+        }
+        volumeIconButton.innerHTML = `<md-icon>${icon}</md-icon>`;
+    }
+    audioEl.addEventListener('volumechange', () => updateVolumeIcon(audioEl.volume));
+
+    // ハイライト更新
+    function updateHighlight() {
+        const currentTime = audioEl.currentTime;
+        let activeLine = null;
+        for (let i = 0; i < lyricLines.length; i++) {
+            const thisTime = lyricLines[i].time;
+            const nextTime = lyricLines[i + 1] ? lyricLines[i + 1].time : Infinity;
+            if (currentTime >= thisTime && currentTime < nextTime) {
+                activeLine = lyricLines[i];
+                break;
+            }
+        }
+        lyricLines.forEach(line => line.element.classList.toggle("highlight", line === activeLine));
+    }
 </script>
 </body>
 </html>
