@@ -2,89 +2,39 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>忘れることなんかできない（バッファ対応・モバイル最適化）</title>
+  <title>忘れることなんかできない</title>
   <link rel="stylesheet" href="https://unpkg.com/mediaelement@4.2.16/build/mediaelementplayer.min.css">
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 20px;
       background: #f0f0f0;
-      padding-top: 40px;
-    }
-    h2 {
-      font-size: 2.2em;
-      margin: 0 0 10px;
       text-align: center;
     }
     audio {
       width: 95vw;
       max-width: 600px;
-      min-width: 200px;
-      margin-top: 10px;
     }
     .controls {
-      width: 95vw;
-      max-width: 600px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 20px;
-      gap: 15px;
+      margin-top: 15px;
     }
     label {
-      font-size: 1.3em;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      margin: 0 10px;
+      font-size: 1.2em;
     }
-    input[type="checkbox"] {
-      width: 24px;
-      height: 24px;
-    }
-    .lyrics {
-      margin-top: 30px;
-      text-align: left;
-      width: 95vw;
-      max-width: 700px;
-      font-size: 1.3em;
-      line-height: 1.6em;
-      word-break: break-word;
-    }
-    .lyrics div {
-      cursor: pointer;
-      padding: 6px 0;
-    }
-    .highlight {
-      background-color: yellow;
-    }
-
-    /* モバイル用にさらに調整 */
     @media (max-width: 600px) {
-      h2 {
-        font-size: 1.8em;
-      }
-      label {
-        font-size: 1.4em;
-      }
-      input[type="checkbox"] {
-        width: 28px;
-        height: 28px;
-      }
-      .lyrics {
-        font-size: 1.4em;
-      }
+      audio { width: 99vw; }
+      label { font-size: 1.1em; }
     }
   </style>
 </head>
 <body>
   <h2>忘れることなんかできない</h2>
-  <audio id="player" controls>
+
+  <audio id="player" controls preload="auto">
     <source id="audioSource" src="111.mp3" type="audio/mp3">
-    お使いのブラウザは audio タグをサポートしていません。
+    <track id="lyricTrack" kind="subtitles" srclang="ja" label="歌詞" default>
   </audio>
 
   <div class="controls">
@@ -93,103 +43,89 @@
     <label><input type="checkbox" id="tenor" checked> テノール</label>
   </div>
 
-  <div class="lyrics" id="lyrics"></div>
-
   <script src="https://unpkg.com/mediaelement@4.2.16/build/mediaelement-and-player.min.js"></script>
   <script>
-    let player;
-    const audioEl = document.getElementById('player');
-    const soprano = document.getElementById('soprano');
-    const alto = document.getElementById('alto');
-    const tenor = document.getElementById('tenor');
-    const lyricsContainer = document.getElementById('lyrics');
-    let lyricLines = [];
+    const audio = document.getElementById("player");
+    const audioSource = document.getElementById("audioSource");
+    const lyricTrack = document.getElementById("lyricTrack");
 
-    // バッファ用に全音源を先読み
-    const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
-    audioFiles.forEach(file=>{
-      const audio = new Audio();
-      audio.src = file;
-      audio.preload = "auto";
-    });
+    const soprano = document.getElementById("soprano");
+    const alto = document.getElementById("alto");
+    const tenor = document.getElementById("tenor");
 
-    // MediaElementPlayer 初期化
-    document.addEventListener('DOMContentLoaded', () => {
-      player = new MediaElementPlayer(audioEl);
-      loadLyrics();
-    });
+    // MediaElement初期化
+    new MediaElementPlayer(audio);
 
+    // ===== 音声切替 =====
     function getAudioFile() {
       const s = soprano.checked;
       const a = alto.checked;
       const t = tenor.checked;
-      if(s && a && t) return "111.mp3";
-      if(!s && a && t) return "011.mp3";
-      if(!s && a && !t) return "010.mp3";
-      if(!s && !a && !t) return "000.mp3";
-      if(s && a && !t) return "110.mp3";
-      if(s && !a && t) return "101.mp3";
-      if(s && !a && !t) return "100.mp3";
-      if(!s && !a && t) return "001.mp3";
+
+      if (s && a && t) return "111.mp3";
+      if (!s && a && t) return "011.mp3";
+      if (!s && a && !t) return "010.mp3";
+      if (!s && !a && !t) return "000.mp3";
+      if (s && a && !t) return "110.mp3";
+      if (s && !a && t) return "101.mp3";
+      if (s && !a && !t) return "100.mp3";
+      if (!s && !a && t) return "001.mp3";
       return "000.mp3";
     }
 
     function updateAudio() {
-      if(!player) return;
+      const currentTime = audio.currentTime;
       const newSrc = getAudioFile();
-      const currentTime = player.media.currentTime;
-      if(audioEl.getAttribute('src') === newSrc) return;
-      player.setSrc(newSrc);
-      player.load();
-      player.media.currentTime = currentTime;
-      player.media.play();
+
+      if (audioSource.src.endsWith(newSrc)) return;
+
+      audio.pause();
+      audioSource.src = newSrc;
+      audio.load();
+      audio.currentTime = currentTime;
+      audio.play();
     }
 
-    [soprano, alto, tenor].forEach(cb => cb.addEventListener('change', updateAudio));
+    [soprano, alto, tenor].forEach(cb => cb.addEventListener("change", updateAudio));
 
+    // ===== 歌詞LRCをVTTに変換してロード =====
     async function loadLyrics() {
-      try {
-        const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
-        const text = await res.text();
-        const lines = text.split("\n");
-        lyricLines = [];
-        lyricsContainer.innerHTML = "";
-        lines.forEach(line => {
-          const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
-          if(match){
-            const min = parseInt(match[1]);
-            const sec = parseFloat(match[2]);
-            const time = min*60 + sec;
-            const lyric = match[3].trim();
-            const div = document.createElement("div");
-            div.textContent = lyric;
-            div.dataset.time = time;
-            div.addEventListener("click", ()=>{player.media.currentTime=time; player.media.play();});
-            lyricsContainer.appendChild(div);
-            lyricLines.push({time, element:div});
-          }
-        });
-      } catch(e) {
-        lyricsContainer.innerHTML="<p>歌詞ファイルの読み込みに失敗しました。</p>";
-      }
-    }
+      // 君のBase64のLRCをここに差し込む
+      const lrcBase64 = `W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UK...`;
 
-    function updateHighlight(){
-      if(!player) return;
-      const currentTime = player.media.currentTime;
-      let activeLine = null;
-      for(let i=0;i<lyricLines.length;i++){
-        const thisTime = lyricLines[i].time;
-        const nextTime = lyricLines[i+1]?lyricLines[i+1].time:Infinity;
-        if(currentTime>=thisTime && currentTime<nextTime){
-          activeLine = lyricLines[i];
-          break;
+      const lrcText = atob(lrcBase64);
+      const lines = lrcText.split(/\r?\n/);
+
+      let vtt = "WEBVTT\n\n";
+
+      function toTimeTag(min, sec) {
+        const s = sec.toFixed(3);
+        return `${String(min).padStart(2,"0")}:${s.padStart(6,"0")}`;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const match = lines[i].match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+        if (match) {
+          const min = parseInt(match[1]);
+          const sec = parseFloat(match[2]);
+          const start = toTimeTag(min, sec);
+          const end = (lines[i+1]?.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\]/))
+                      ? toTimeTag(parseInt(RegExp.$1), parseFloat(RegExp.$2))
+                      : "99:59.000";
+          const lyric = match[3].trim();
+          if (lyric) {
+            vtt += `${start} --> ${end}\n${lyric}\n\n`;
+          }
         }
       }
-      lyricLines.forEach(line=>line.element.classList.toggle("highlight", line===activeLine));
+
+      const blob = new Blob([vtt], { type: "text/vtt" });
+      lyricTrack.src = URL.createObjectURL(blob);
     }
 
-    audioEl.addEventListener("timeupdate", updateHighlight);
+    window.addEventListener("load", () => {
+      loadLyrics();
+    });
   </script>
 </body>
 </html>
