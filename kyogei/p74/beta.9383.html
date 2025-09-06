@@ -135,39 +135,48 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // Web Audio API イコライザー
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const source = audioCtx.createMediaElementSource(audioEl);
-  const eqFrequencies = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-  const filters = eqFrequencies.map(freq=>{
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "peaking";
-    filter.frequency.value = freq;
-    filter.Q.value = 1;
-    filter.gain.value = 0;
-    return filter;
-  });
-  // 接続
-  source.connect(filters[0]);
-  for(let i=0;i<filters.length-1;i++) filters[i].connect(filters[i+1]);
-  filters[filters.length-1].connect(audioCtx.destination);
+  let source, filters;
 
-  // スライダー生成
-  const eqSliders = document.getElementById('eqSliders');
-  filters.forEach((f,i)=>{
-    const container = document.createElement('div');
-    container.className = "flex flex-col items-center";
-    const label = document.createElement('span');
-    label.textContent = eqFrequencies[i]+"Hz";
-    const slider = document.createElement('input');
-    slider.type="range";
-    slider.min=-12;
-    slider.max=12;
-    slider.value=0;
-    slider.step=0.5;
-    slider.className="w-full";
-    slider.addEventListener('input',()=>{ f.gain.value = parseFloat(slider.value); });
-    container.appendChild(label);
-    container.appendChild(slider);
-    eqSliders.appendChild(container);
+  audioEl.addEventListener('play', async ()=>{
+    if(audioCtx.state === 'suspended') await audioCtx.resume();
+
+    if(!source){
+      source = audioCtx.createMediaElementSource(audioEl);
+      const eqFrequencies = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+      filters = eqFrequencies.map(freq=>{
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "peaking";
+        filter.frequency.value = freq;
+        filter.Q.value = 1;
+        filter.gain.value = 0;
+        return filter;
+      });
+      // 接続
+      source.connect(filters[0]);
+      for(let i=0;i<filters.length-1;i++) filters[i].connect(filters[i+1]);
+      filters[filters.length-1].connect(audioCtx.destination);
+
+      // スライダー生成
+      const eqSliders = document.getElementById('eqSliders');
+      eqSliders.innerHTML = "";
+      filters.forEach((f,i)=>{
+        const container = document.createElement('div');
+        container.className = "flex flex-col items-center";
+        const label = document.createElement('span');
+        label.textContent = eqFrequencies[i]+"Hz";
+        const slider = document.createElement('input');
+        slider.type="range";
+        slider.min=-12;
+        slider.max=12;
+        slider.value=0;
+        slider.step=0.5;
+        slider.className="w-full";
+        slider.addEventListener('input',()=>{ f.gain.value = parseFloat(slider.value); });
+        container.appendChild(label);
+        container.appendChild(slider);
+        eqSliders.appendChild(container);
+      });
+    }
   });
 
   // モーダル表示/非表示
