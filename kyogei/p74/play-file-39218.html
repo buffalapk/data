@@ -1,170 +1,138 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>忘れられない歌プレイヤー</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Green Audio Player CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/css/green-audio-player.min.css">
-
-  <style>
-    /* プレーヤーをカードいっぱいに広げる */
-    .gap-player {
-      width: 100% !important;
-    }
-    .gap-player .controls {
-      width: 100% !important;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>忘れられない歌プレイヤー</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/css/green-audio-player.min.css">
+<style>
+/* プレーヤーを幅いっぱいに広げる */
+.gap-player {
+  width: 100% !important;
+}
+.gap-player .controls {
+  width: 100% !important;
+}
+/* カード高さをプレーヤーに自動フィット */
+.audio-card {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+</style>
 </head>
 <body class="bg-gray-100 text-slate-700 p-8 min-h-screen flex flex-col items-center font-sans box-border">
-  <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center leading-tight mb-4">忘れられない歌</h2>
+<h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center leading-tight mb-4">忘れられない歌</h2>
 
-  <div class="w-11/12 max-w-lg p-6 bg-white rounded-2xl shadow-xl box-border flex justify-center">
-    <!-- Green Audio Player用のコンテナ -->
-    <div class="gap-player w-full mx-auto">
-      <audio id="player" preload="auto" class="w-full">
-        <source id="audioSource" src="111.mp3" type="audio/mp3">
-        お使いのブラウザは audio タグをサポートしていません。
-      </audio>
-    </div>
+<!-- プレーヤーカード -->
+<div class="audio-card w-11/12 max-w-lg bg-white rounded-2xl shadow-xl p-4 box-border">
+  <div class="gap-player w-full">
+    <audio id="player" preload="auto" class="w-full">
+      <source id="audioSource" src="111.mp3" type="audio/mp3">
+      お使いのブラウザは audio タグをサポートしていません。
+    </audio>
   </div>
+</div>
 
-  <div class="w-11/12 max-w-lg flex flex-wrap justify-center gap-6 mt-6 mb-6">
-    <label class="text-lg flex items-center gap-2 cursor-pointer">
-      <input type="checkbox" id="soprano" checked class="w-5 h-5 cursor-pointer rounded-full">
-      ソプラノ
-    </label>
-    <label class="text-lg flex items-center gap-2 cursor-pointer">
-      <input type="checkbox" id="alto" checked class="w-5 h-5 cursor-pointer rounded-full">
-      アルト
-    </label>
-    <label class="text-lg flex items-center gap-2 cursor-pointer">
-      <input type="checkbox" id="tenor" checked class="w-5 h-5 cursor-pointer rounded-full">
-      テノール
-    </label>
-  </div>
+<!-- ボイスパート切替 -->
+<div class="w-11/12 max-w-lg flex flex-wrap justify-center gap-6 mt-6 mb-6">
+  <label class="text-lg flex items-center gap-2 cursor-pointer">
+    <input type="checkbox" id="soprano" checked class="w-5 h-5 cursor-pointer rounded-full"> ソプラノ
+  </label>
+  <label class="text-lg flex items-center gap-2 cursor-pointer">
+    <input type="checkbox" id="alto" checked class="w-5 h-5 cursor-pointer rounded-full"> アルト
+  </label>
+  <label class="text-lg flex items-center gap-2 cursor-pointer">
+    <input type="checkbox" id="tenor" checked class="w-5 h-5 cursor-pointer rounded-full"> テノール
+  </label>
+</div>
 
-  <div class="lyrics w-11/12 max-w-2xl text-lg leading-relaxed word-break-word p-4 sm:p-2 text-center"></div>
+<!-- 歌詞 -->
+<div class="lyrics w-11/12 max-w-2xl text-lg leading-relaxed word-break-word p-4 sm:p-2 text-center"></div>
 
-  <!-- Green Audio Player JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/js/green-audio-player.min.js"></script>
+<!-- Green Audio Player JS -->
+<script src="https://cdn.jsdelivr.net/npm/@techiepi/green-audio-player/dist/js/green-audio-player.min.js"></script>
 
-  <script>
-    const audioEl = document.getElementById('player');
-    const soprano = document.getElementById('soprano');
-    const alto = document.getElementById('alto');
-    const tenor = document.getElementById('tenor');
-    const lyricsContainer = document.querySelector('.lyrics');
-    let lyricLines = [];
+<script>
+let audioEl, lyricLines = [];
+const soprano = document.getElementById('soprano');
+const alto = document.getElementById('alto');
+const tenor = document.getElementById('tenor');
+const lyricsContainer = document.querySelector('.lyrics');
 
-    // Green Audio Player 初期化
-    document.addEventListener('DOMContentLoaded', () => {
-      GreenAudioPlayer.init({
-        selector: '.gap-player',
-        stopOthersOnPlay: true
-      });
-      loadLyrics();
-    });
+const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
+const audioBuffers = {};
+audioFiles.forEach(f => { const a = new Audio(); a.src=f; a.preload="auto"; audioBuffers[f]=a; });
 
-    // バッファ用に全音源を先読み
-    const audioFiles = ["000.mp3","001.mp3","010.mp3","011.mp3","100.mp3","101.mp3","110.mp3","111.mp3"];
-    const audioBuffers = {};
-    audioFiles.forEach(file=>{
-      const audio = new Audio();
-      audio.src = file;
-      audio.preload = "auto";
-      audioBuffers[file] = audio;
-    });
+function getAudioFile(){
+  const s = soprano.checked, a = alto.checked, t = tenor.checked;
+  if(s&&a&&t) return "111.mp3";
+  if(!s&&a&&t) return "011.mp3";
+  if(!s&&a&&!t) return "010.mp3";
+  if(!s&&!a&&!t) return "000.mp3";
+  if(s&&a&&!t) return "110.mp3";
+  if(s&&!a&&t) return "101.mp3";
+  if(s&&!a&&!t) return "100.mp3";
+  if(!s&&!a&&t) return "001.mp3";
+  return "000.mp3";
+}
 
-    // 歌詞読み込み
-    async function loadLyrics() {
-      try {
-        const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
-        const text = await res.text();
-        const lines = text.split("\n");
-        lyricLines = [];
-        lyricsContainer.innerHTML = "";
+function updateAudio(){
+  const newSrc = getAudioFile();
+  const currentTime = audioEl.currentTime;
+  if(audioEl.getAttribute('src')===newSrc) return;
+  audioEl.src = newSrc;
+  audioEl.load();
+  audioEl.currentTime = currentTime;
+  audioEl.play();
+}
 
-        lines.forEach(line => {
-          const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
-          if(match){
-            const min = parseInt(match[1]);
-            const sec = parseFloat(match[2]);
-            const time = min*60 + sec;
-            const lyric = match[3].trim();
+function updateHighlight(){
+  const t = audioEl.currentTime;
+  let activeLine = null;
+  for(let i=0;i<lyricLines.length;i++){
+    const thisTime=lyricLines[i].time;
+    const nextTime=lyricLines[i+1]?lyricLines[i+1].time:Infinity;
+    if(t>=thisTime && t<nextTime){ activeLine=lyricLines[i]; break; }
+  }
+  lyricLines.forEach(l=>{
+    l.element.classList.remove('bg-yellow-300','font-semibold','text-gray-800');
+    if(l===activeLine) l.element.classList.add('bg-yellow-300','font-semibold','text-gray-800');
+  });
+}
 
-            const div = document.createElement("div");
-            div.textContent = lyric;
-            div.dataset.time = time;
-            div.addEventListener("click", ()=>{audioEl.currentTime = time; audioEl.play();});
-
-            lyricsContainer.appendChild(div);
-            lyricLines.push({time, element:div});
-          }
-        });
-      } catch(e) {
-        lyricsContainer.innerHTML="<p>歌詞ファイルの読み込みに失敗しました。</p>";
-        console.error(e);
+async function loadLyrics(){
+  try{
+    const res = await fetch("data:application/octet-stream;base64,W3RpOuW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhF0KW2FyOuadvuWFg+WNmuW/l10KWzAwOjA1LjkwXeOBk+OBruW6g+OBhOWkp+WcsOOBp+OAgOWDleOBn+OBoeOBr+OCgeOBkOOCiumAoijjgYIp44Gj44GmClswMDoxOC41MF3ovpvjgYvjgaPjgZ/jgZPjgajjgoLjga7jgorotorjgYjjgIDlsJHjgZfjgZrjgaTmg7PjgYTph43jga3lkIjjgYjjgZ/ml6UKWzAwOjMyLjMwXembouOCjOOBsOOBquOCjOOBq+OBquOCi+OBruOBr+OBmeOBlOOBj+WvguOBl+OBhOOBkeOCjOOBqQpbMDA6NDQuOTBd5YOV44Gf44Gh44Gu6ZW344GE5peF44Gv44CA44G+44Gg44CA5aeL44G+44Gj44Gf44Gw44GL44KK44Gg44GL44KJClswMTowMi42MF3mlK/jgYjlkIjjgaPjgZ/jgorjgIDmtpnjgoLmtYHjgZflkIjjgYjjgZ/jga0KWzAxOjE0LjkwXeOBr+OCi+OBi+OBquWkouOCkui/veOBhOOBi+OBkeOBn+OAgOi8neOBj+Wto+evgOOBq+OCguOBhuS6jOW6puOBqApbMDE6MjcuOTBd44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GE44CA44KC44Gp44KM44Gq44GEClswMTozMi4zMF3jgZHjgozjganigKYKWzAxOjM0LjMwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQpbMDE6NDMuNzBd44Op44Op44Op4oCmClswMTo1Ni4wMF3jga/jgovjgYvjgarlpKLjgpLov73jgYTjgYvjgZHjgZ/jgIDovJ3jgY/lraPnr4DjgavjgoLjgYbkuozluqbjgagKWzAyOjA5LjAwXeOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhOOAgOOCguOBqeOCjOOBquOBhApbMDI6MTMuMjBd44GR44KM44Gp4oCmClswMjoxNS4zMF3lv5jjgozjgarjgYTvvIHjgIDlv5jjgozjgarjgYTvvIHvvIHjgIDlv5jjgozjgovjgZPjgajjgarjgpPjgYvjgafjgY3jgarjgYTvvIHvvIHvvIEKWzAyOjI0LjgwXeW/mOOCjOOBquOBhO+8geOAgOW/mOOCjOOBquOBhO+8ge+8geOAgOW/mOOCjOOCi+OBk+OBqOOBquOCk+OBi+OBp+OBjeOBquOBhO+8ge+8ge+8gQ==");
+    const text = await res.text();
+    const lines = text.split("\n");
+    lyricLines = [];
+    lyricsContainer.innerHTML="";
+    lines.forEach(line=>{
+      const match=line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+      if(match){
+        const min=parseInt(match[1]), sec=parseFloat(match[2]), time=min*60+sec, lyric=match[3].trim();
+        const div=document.createElement("div");
+        div.textContent=lyric;
+        div.dataset.time=time;
+        div.addEventListener("click",()=>{audioEl.currentTime=time; audioEl.play();});
+        lyricsContainer.appendChild(div);
+        lyricLines.push({time, element:div});
       }
-    }
+    });
+  }catch(e){lyricsContainer.innerHTML="<p>歌詞の読み込みに失敗しました。</p>"; console.error(e);}
+}
 
-    // チェックボックスに応じた音源
-    function getAudioFile() {
-      const s = soprano.checked;
-      const a = alto.checked;
-      const t = tenor.checked;
-
-      if(s && a && t) return "111.mp3";
-      if(!s && a && t) return "011.mp3";
-      if(!s && a && !t) return "010.mp3";
-      if(!s && !a && !t) return "000.mp3";
-      if(s && a && !t) return "110.mp3";
-      if(s && !a && t) return "101.mp3";
-      if(s && !a && !t) return "100.mp3";
-      if(!s && !a && t) return "001.mp3";
-      return "000.mp3";
-    }
-
-    // 音源更新
-    function updateAudio() {
-      const newSrc = getAudioFile();
-      const currentTime = audioEl.currentTime;
-
-      if(audioEl.getAttribute('src') === newSrc) return;
-
-      audioEl.src = newSrc;
-      audioEl.load();
-      audioEl.currentTime = currentTime;
-      audioEl.play();
-    }
-
-    [soprano, alto, tenor].forEach(cb => cb.addEventListener('change', updateAudio));
-
-    // ハイライト更新（自動スクロールなし）
-    function updateHighlight(){
-      const currentTime = audioEl.currentTime;
-      let activeLine = null;
-      for(let i=0;i<lyricLines.length;i++){
-        const thisTime = lyricLines[i].time;
-        const nextTime = lyricLines[i+1]?lyricLines[i+1].time:Infinity;
-        if(currentTime>=thisTime && currentTime<nextTime){
-          activeLine = lyricLines[i];
-          break;
-        }
-      }
-      lyricLines.forEach(line=>{
-        line.element.classList.remove('bg-yellow-300', 'font-semibold', 'text-gray-800');
-        if (line === activeLine) {
-          line.element.classList.add('bg-yellow-300', 'font-semibold', 'text-gray-800');
-        }
-      });
-    }
-
-    audioEl.addEventListener("timeupdate", updateHighlight);
-  </script>
+document.addEventListener('DOMContentLoaded',()=>{
+  GreenAudioPlayer.init({selector:'.gap-player', stopOthersOnPlay:true});
+  audioEl=document.querySelector('.gap-player audio');
+  [soprano, alto, tenor].forEach(cb=>cb.addEventListener('change',updateAudio));
+  audioEl.addEventListener('timeupdate',updateHighlight);
+  loadLyrics();
+});
+</script>
 </body>
 </html>
